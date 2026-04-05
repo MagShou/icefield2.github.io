@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icefield | 让推理降温，让智能落地</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.33/dist/lenis.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;600;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-black: #000000;
+            --ice-blue: #00A3FF;
+            --deep-purple: #3000FF;
+            --frost-white: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: var(--bg-black);
+            color: var(--frost-white);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- 1. 背景：增强亮度和饱和度的非对称晕染 --- */
+        .aurora-bg {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -2; overflow: hidden;
+        }
+        .glow {
+            position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.75; 
+            animation: drift 25s infinite alternate ease-in-out;
+        }
+        /* 左上深蓝晕染 */
+        .glow-1 { width: 110vw; height: 110vh; background: radial-gradient(circle, rgba(0, 163, 255, 0.4) 0%, transparent 60%); top: -30%; left: -25%; }
+        /* 右下暗紫晕染 */
+        .glow-2 { width: 90vw; height: 90vh; background: radial-gradient(circle, rgba(77, 0, 255, 0.3) 0%, transparent 60%); bottom: -20%; right: -15%; animation-delay: -5s; }
+
+        @keyframes drift {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(8%, 6%) scale(1.15); }
+        }
+
+        /* --- 2. 交互卡片：2D 弹性放大，无内容压缩 --- */
+        .interactive-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
+            position: relative; overflow: hidden;
+        }
+        .interactive-card:hover {
+            border-color: var(--ice-blue);
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-8px) scale(1.02); 
+            box-shadow: 0 20px 40px -10px rgba(0, 163, 255, 0.15);
+        }
+        
+        /* 鼠标跟随的高亮光束 */
+        .interactive-card::after {
+            content: ""; position: absolute; inset: 0; opacity: 0;
+            background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(0, 163, 255, 0.1), transparent 40%);
+            transition: opacity 0.5s; pointer-events: none;
+        }
+        .interactive-card:hover::after { opacity: 1; }
+
+        /* 文字视觉效果 */
+        .hero-title {
+            font-size: clamp(50px, 11vw, 160px);
+            font-weight: 900; letter-spacing: -0.06em; line-height: 0.85;
+            text-transform: uppercase;
+        }
+        .ice-text {
+            background: linear-gradient(180deg, #fff 10%, var(--ice-blue) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 163, 255, 0.4);
+        }
+
+        /* 导航与页脚 */
+        nav { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .nav-link { font-size: 13px; letter-spacing: 2px; opacity: 0.6; transition: 0.3s; text-transform: uppercase; }
+        .nav-link:hover { opacity: 1; color: var(--ice-blue); }
+
+        .value-label { color: var(--ice-blue); font-weight: 800; font-size: 1.25rem; margin-bottom: 8px; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="aurora-bg">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <nav class="fixed top-0 w-full z-50 px-10 py-8 flex justify-between items-center">
+        <div class="text-2xl font-black tracking-tighter italic">ICEFIELD</div>
+        <div class="hidden md:flex space-x-12">
+            <a href="#home" class="nav-link">首页</a>
+            <a href="#products" class="nav-link">产品</a>
+            <a href="#about" class="nav-link">关于我们</a>
+            <a href="#contact" class="nav-link">联系我们</a>
+        </div>
+        <a href="#contact" class="hidden md:block px-6 py-2 border border-cyan-500 text-cyan-500 text-[10px] tracking-widest hover:bg-cyan-500 hover:text-black transition uppercase font-bold">Contact Us</a>
+    </nav>
+
+    <main class="container mx-auto px-6 md:px-20 relative z-10">
+        
+        <section id="home" class="min-h-screen flex flex-col justify-center pt-24 scroll-reveal">
+            <div class="mb-10 flex items-center space-x-4">
+                <div class="h-[1px] w-12 bg-blue-500"></div>
+                <span class="text-blue-400 text-sm tracking-[0.5em] uppercase font-light">
+                    低功耗｜低 TCO｜本地部署｜系统级优化
+                </span>
+            </div>
+            <h1 class="hero-title mb-10">
+                让推理降温<br><span class="ice-text">让智能落地</span>
+            </h1>
+            <p class="max-w-3xl text-gray-300 text-xl md:text-2xl font-light leading-relaxed mb-16">
+                Icefield 冰原智能以低功耗设计、系统级优化和本地部署方案，构建更低 TCO、更低 token 成本的 AI 推理基础设施。
+            </p>
+            <div class="flex flex-wrap gap-8">
+                <a href="#products" class="px-14 py-5 bg-white text-black font-black text-sm uppercase tracking-widest hover:bg-cyan-500 transition duration-500">了解产品</a>
+                <a href="#contact" class="px-14 py-5 border border-white/30 font-black text-sm uppercase tracking-widest hover:border-cyan-500 transition duration-500">联系我们</a>
+            </div>
+        </section>
+
+        <section class="py-40 border-t border-white/5 scroll-reveal">
+            <div class="grid md:grid-cols-2 gap-24">
+                <h2 class="text-5xl font-bold italic leading-tight text-white">
+                    冰原，不只是地理概念
+                </h2>
+                <div class="space-y-8 text-gray-300 text-xl font-light leading-loose">
+                    <p>它是变化最先发生、也最容易被看见的地方。我们相信，AI 基础设施的下一阶段，不该只是更强，也该更冷静、更高效、更可持续。</p>
+                    <p>从低功耗设计到系统级优化，Icefield 希望让智能的增长拥有更轻的代价。</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="problem" class="py-32 scroll-reveal">
+            <div class="mb-24">
+                <span class="text-blue-400 text-sm tracking-widest uppercase mb-4 block font-mono">Solutions</span>
+                <h2 class="text-5xl font-bold tracking-tight mb-8 text-white">推理时代，基础设施需要新的答案</h2>
+                <p class="text-gray-400 max-w-2xl text-xl font-light">客户不再只关心峰值性能，而越来越关心真实部署的经济性：</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="interactive-card p-12 h-full" onmousemove="handleLightTracking(event, this)">
+                    <div class="text-cyan-500 font-mono text-sm mb-6 tracking-widest">01 / POWER</div>
+                    <h4 class="text-xl font-bold">功耗是否可控</h4>
+                </div>
+                <div class="interactive-card p-12 h-full" onmousemove="handleLightTracking(event, this)">
+                    <div class="text-cyan-500 font-mono text-sm mb-6 tracking-widest">02 / COST</div>
+                    <h4 class="text-xl font-bold">TCO 是否更低</h4>
+                </div>
+                <div class="interactive-card p-12 h-full" onmousemove="handleLightTracking(event, this)">
+                    <div class="text-cyan-500 font-mono text-sm mb-6 tracking-widest">03 / TOKEN</div>
+                    <h4 class="text-xl font-bold">Token 成本合理性</h4>
+                </div>
+                <div class="interactive-card p-12 h-full" onmousemove="handleLightTracking(event, this)">
+                    <div class="text-cyan-500 font-mono text-sm mb-6 tracking-widest">04 / SPEED</div>
+                    <h4 class="text-xl font-bold">能否更快部署</h4>
+                </div>
+                <div class="interactive-card p-12 h-full" onmousemove="handleLightTracking(event, this)">
+                    <div class="text-cyan-500 font-mono text-sm mb-6 tracking-widest">05 / SECURITY</div>
+                    <h4 class="text-xl font-bold">本地运行安全性</h4>
+                </div>
+                <div class="interactive-card p-12 h-full" onmousemove="handleLightTracking(event, this)">
+                    <div class="text-cyan-500 font-mono text-sm mb-6 tracking-widest">06 / RESULTS</div>
+                    <h4 class="text-xl font-bold">落地业务场景</h4>
+                </div>
+            </div>
+        </section>
+
+        <section id="products" class="py-40 border-t border-white/5 scroll-reveal">
+            <h2 class="text-6xl font-black tracking-tight text-center mb-24 text-white">三条核心产品线</h2>
+            <div class="space-y-12">
+                
+                <div class="interactive-card p-16 rounded-sm" onmousemove="handleLightTracking(event, this)">
+                    <div class="flex flex-col md:flex-row justify-between gap-12">
+                        <div class="md:w-1/2">
+                            <span class="text-cyan-500 font-mono text-sm tracking-widest mb-4 block uppercase">Product Line 01</span>
+                            <h3 class="text-3xl font-black mb-8 text-white uppercase tracking-tight">标准化推理基础设施方案</h3>
+                            <p class="text-gray-300 font-light mb-10 leading-relaxed text-lg">提供低功耗、低 TCO、高交付效率的标准化方案。按模块化方式输出服务器、机柜、网络、存储和部署方案，支持兆瓦级部署。</p>
+                            <div class="grid grid-cols-1 gap-3 mb-10 text-sm md:text-base text-gray-300">
+                                <div class="bg-white/5 px-4 py-3 border-l-2 border-cyan-500">模块化与标准化架构</div>
+                                <div class="bg-white/5 px-4 py-3 border-l-2 border-cyan-500">兆瓦级集群部署能力</div>
+                                <div class="bg-white/5 px-4 py-3 border-l-2 border-cyan-500">传统工业场地快速升级</div>
+                            </div>
+                            <a href="#contact" class="inline-block border-b-2 border-cyan-500 text-cyan-500 pb-2 text-sm font-bold tracking-widest hover:text-white hover:border-white transition uppercase">咨询详情</a>
+                      </div>
+                         <div class="md:w-1/2">
+                          <div class="h-full min-h-[420px] rounded-sm overflow-hidden border border-white/5 bg-black/20">
+                           <img 
+                            src="./scott-rodgerson-PSpf_XgOM5w-unsplash.jpg" 
+                            alt="标准化推理基础设施方案"
+                            class="w-full h-full object-cover"
+                           />
+                          </div>
+                         </div>
+                        </div>
+                       </div>
+
+                <div class="interactive-card p-16 rounded-sm" onmousemove="handleLightTracking(event, this)">
+                    <div class="flex flex-col md:flex-row justify-between gap-12">
+                        <div class="md:w-1/2">
+                            <span class="text-cyan-500 font-mono text-sm tracking-widest mb-4 block uppercase">Product Line 02</span>
+                            <h3 class="text-3xl font-black mb-8 text-white uppercase tracking-tight">面向 SMB 的私有化推理方案</h3>
+                            <p class="text-gray-300 font-light mb-10 leading-relaxed text-lg">核心是以本地部署的推理服务器和小型集群为载体，帮助企业在内部运行 AI agent 和知识库，保障数据主权并使成本可控。</p>
+                            <div class="grid grid-cols-1 gap-3 mb-10 text-sm md:text-base text-gray-300">
+                                <div class="bg-white/5 px-4 py-3 border-l-2 border-cyan-500">数据本地化高度安全</div>
+                                <div class="bg-white/5 px-4 py-3 border-l-2 border-cyan-500">将持续调用转化为本地资产</div>
+                                <div class="bg-white/5 px-4 py-3 border-l-2 border-cyan-500">系统集成优化设计</div>
+                           </div>
+                     </div>
+
+                         <div class="md:w-1/2">
+                          <div class="h-full min-h-[420px] rounded-sm overflow-hidden border border-white/5 bg-black/20">
+                           <img 
+                            src="./florian-krumm-yLDabpoCL3s-unsplash.jpg" 
+                            alt="面向 SMB 的私有化推理方案"
+                            class="w-full h-full object-cover"
+                           />
+                          </div>
+                         </div>
+                        </div>
+                       </div>
+
+                <div class="interactive-card p-16 rounded-sm" onmousemove="handleLightTracking(event, this)">
+                    <div class="flex flex-col md:flex-row justify-between gap-12">
+                        <div class="md:w-1/2">
+                            <span class="text-cyan-500 font-mono text-sm tracking-widest mb-4 block uppercase">Product Line 03</span>
+                            <h3 class="text-3xl font-black mb-8 text-white uppercase tracking-tight">低功耗本地推理设备</h3>
+                            <p class="text-gray-300 font-light mb-10 leading-relaxed text-lg">围绕特定芯片进行 PCB/整机优化。它不是传统服务器，而是一台本地就能跑推理、底层完成适配的高能效终端。</p>
+                            <div class="grid grid-cols-1 gap-3 mb-10 text-sm md:text-base text-gray-300">
+                                <div class="bg-white/5 px-4 py-3 border-l-2 border-cyan-500">小型本地化专业形态</div>
+                                <div class="bg-white/5 px-4 py-3 border-l-2 border-cyan-500">即插即用，无需复杂选型</div>
+                                <div class="bg-white/5 px-4 py-3 border-l-2 border-cyan-500">降低本地 AI 验证门槛</div>
+                            </div>
+                            <a href="#contact" class="inline-block border-b-2 border-cyan-500 text-cyan-500 pb-2 text-sm font-bold tracking-widest hover:text-white hover:border-white transition uppercase">预约演示</a>
+                        </div>
+                        <div class="md:w-1/2">
+                          <div class="h-full min-h-[420px] rounded-sm overflow-hidden border border-white/5 bg-black/20">
+                           <img 
+                            src="./adi-goldstein-EUsVwEOsblE-unsplash.jpg" 
+                            alt="低功耗本地推理设备"
+                            class="w-full h-full object-cover"
+                           />
+                          </div>
+                         </div>
+                        </div>
+                       </div>
+
+            </div>
+        </section>
+
+        <section id="about" class="py-40 border-t border-white/5 scroll-reveal">
+            <div class="grid md:grid-cols-2 gap-20">
+                <div>
+                    <h2 class="text-5xl font-bold mb-10 text-white uppercase tracking-tighter">About Us</h2>
+                    <p class="text-gray-400 font-light text-xl leading-relaxed mb-12">杭州冰原智能科技有限责任公司（Icefield）聚焦 AI 推理基础设施，通过全链路系统级优化创造长期经济性。</p>
+                    
+                    <div class="space-y-10">
+                        <div>
+                            <h4 class="text-cyan-500 font-mono text-sm tracking-widest mb-3 uppercase">Mission</h4>
+                            <p class="text-lg text-gray-300 font-light leading-relaxed">通过低功耗设计、系统级优化和本地部署，降低 AI 推理的使用成本。</p>
+                        </div>
+                        <div>
+                            <h4 class="text-cyan-500 font-mono text-sm tracking-widest mb-3 uppercase">Vision</h4>
+                            <p class="text-lg text-gray-300 font-light leading-relaxed">成为新一代 AI 推理基础设施的创新者，让高效、可部署、具备长期经济性的推理能力真正落地。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="border-l-2 border-cyan-500 pl-6 bg-white/5 p-6 rounded-sm">
+                        <h4 class="value-label">让推理更高效</h4>
+                        <p class="text-sm text-gray-300">围绕真实 inference workload 做优化，而不是追求孤立峰值性能。关注持续运行中的吞吐、功耗、稳定性与单位成本表现。</p>
+                    </div>
+                    <div class="border-l-2 border-cyan-500 pl-6 bg-white/5 p-6 rounded-sm">
+                        <h4 class="value-label">让系统更聪明</h4>
+                        <p class="text-sm text-gray-300">真正的优化来自系统协同，而不是单一部件堆叠。从板级、整机到散热、供电与部署链路，做全链路协同设计。</p>
+                    </div>
+                    <div class="border-l-2 border-cyan-500 pl-6 bg-white/5 p-6 rounded-sm">
+                        <h4 class="value-label">让部署更真实</h4>
+                        <p class="text-sm text-gray-300">产品价值必须在真实场景中完成验证、交付和运行，强调可部署性、可复制性与规模化落地，而不止于概念验证。</p>
+                    </div>
+                    <div class="border-l-2 border-cyan-500 pl-6 bg-white/5 p-6 rounded-sm">
+                        <h4 class="value-label">让智能更可持续</h4>
+                        <p class="text-sm text-gray-300">通过降低功耗、TCO 与 token cost，提升 AI 推理的长期经济性，让算力增长建立在更高效率的基础设施之上。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="py-40 border-t border-white/5 scroll-reveal">
+            <div class="max-w-5xl mx-auto">
+                <div class="text-center mb-24">
+                    <h2 class="text-6xl font-black mb-8 text-white uppercase tracking-tight">联系合作</h2>
+                    <p class="text-gray-400 text-xl font-light">如果您正在寻找更适合推理场景的基础设施方案。</p>
+                </div>
+                <form class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/5 p-12 border border-white/10 rounded-sm">
+                    <input type="text" placeholder="姓名 *" class="bg-black/80 border border-white/10 p-4 outline-none focus:border-cyan-500 transition text-sm text-white" required>
+                    <input type="text" placeholder="公司 / 机构 *" class="bg-black/80 border border-white/10 p-4 outline-none focus:border-cyan-500 transition text-sm text-white" required>
+                    <input type="text" placeholder="职位" class="bg-black/80 border border-white/10 p-4 outline-none focus:border-cyan-500 transition text-sm text-white">
+                    <input type="email" placeholder="业务邮箱 *" class="bg-black/80 border border-white/10 p-4 outline-none focus:border-cyan-500 transition text-sm text-white" required>
+                    <input type="text" placeholder="电话 / WhatsApp" class="bg-black/80 border border-white/10 p-4 outline-none focus:border-cyan-500 transition text-sm text-white md:col-span-2">
+                    <select class="bg-black/80 border border-white/10 p-4 outline-none focus:border-cyan-500 transition text-gray-400 text-sm md:col-span-2">
+                        <option>感兴趣的产品方向...</option>
+                        <option>标准化推理基础设施方案</option>
+                        <option>SMB 私有化推理方案</option>
+                        <option>低功耗本地推理设备</option>
+                    </select>
+                    <textarea placeholder="需求描述 *" rows="4" class="bg-black/80 border border-white/10 p-4 outline-none focus:border-cyan-500 transition text-sm text-white md:col-span-2" required></textarea>
+                    <button class="md:col-span-2 py-5 bg-cyan-500 text-black font-black uppercase tracking-widest hover:bg-white transition duration-500 text-sm">提交咨询</button>
+                </form>
+                <div class="mt-16 text-center text-sm text-gray-500 font-light space-x-10 uppercase tracking-widest">
+                    <span>Email: support@ice-field.com</span>
+                    <span>LinkedIn</span>
+                    <span>微信公众号</span> 
+                    <span>Address: 杭州算力创新中心</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="py-16 border-t border-white/5 bg-black text-center text-[11px] text-gray-600 uppercase tracking-[0.3em]">
+        让推理降温，让智能落地 | HANGZHOU, CHINA
+        <p class="mt-4 opacity-50">Icefield 面向 AI 推理场景的低功耗基础设施与本地部署方案</p>
+    </footer>
+
+    <script>
+        // 平滑滚动
+        const lenis = new Lenis()
+        function raf(time) {
+            lenis.raf(time)
+            requestAnimationFrame(raf)
+        }
+        requestAnimationFrame(raf)
+
+        // 交互：2D 卡片内部高亮追踪（不使用 3D 旋转压缩变形）
+        function handleLightTracking(e, card) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            card.style.setProperty('--mouse-x', `${x}px`);
+            card.style.setProperty('--mouse-y', `${y}px`);
+        }
+
+        // 滚动入场动效
+        gsap.utils.toArray('.scroll-reveal').forEach(el => {
+            gsap.from(el, {
+                scrollTrigger: { trigger: el, start: "top 85%", once: true },
+                y: 50, opacity: 0, duration: 1.2, ease: "power4.out"
+            });
+        });
+    </script>
+</body>
+</html>
